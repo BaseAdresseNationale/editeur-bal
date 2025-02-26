@@ -8,7 +8,11 @@ import {
   ChangeEventHandler,
 } from "react";
 import Router from "next/router";
-import { validate } from "@ban-team/validateur-bal";
+import {
+  validate,
+  ValidateProfile,
+  ValidateRowType,
+} from "@ban-team/validateur-bal";
 import { uniqBy } from "lodash";
 import {
   Pane,
@@ -89,12 +93,12 @@ type CommuneRow = {
   nom: string;
 };
 
-function extractCommuneFromCSV(rows: any[]): CommuneRow[] {
+function extractCommuneFromCSV(rows: ValidateRowType[]): CommuneRow[] {
   // Get cle_interop and slice it to get the commune's code
   const communes: CommuneRow[] = rows.map(
     ({ parsedValues, additionalValues }) => ({
       code: extractCommuneCodeFromRow({ parsedValues, additionalValues }),
-      nom: parsedValues.commune_nom,
+      nom: parsedValues.commune_nom as string,
     })
   );
 
@@ -133,7 +137,8 @@ function UploadForm({
   const [selectedCodeCommune, setSelectedCodeCommune] = useState<string | null>(
     null
   );
-  const [validationReport, setValidationReport] = useState<any | null>(null);
+  const [validationReport, setValidationReport] =
+    useState<ValidateProfile | null>(null);
   const [invalidRowsCount, setInvalidRowsCount] = useState<number | null>(null);
 
   const [isShownAlertOtherBal, setIsShownAlertOtherBal] =
@@ -149,7 +154,6 @@ function UploadForm({
     setCommunes(null);
     handleCommune(null);
     setSelectedCodeCommune(null);
-
     if (file) {
       if (getFileExtension(file.name).toLowerCase() !== "csv") {
         return onError(
@@ -158,7 +162,9 @@ function UploadForm({
       }
 
       // Detect multi communes
-      const validationReport = await validate(file, { profile: "1.3-relax" });
+      const validationReport: ValidateProfile = (await validate(file, {
+        profile: "1.3-relax",
+      })) as ValidateProfile;
       const communes: CommuneRow[] = extractCommuneFromCSV(
         validationReport.rows
       );
